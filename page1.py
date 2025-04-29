@@ -12,7 +12,7 @@ if 'gif_displayed' not in st.session_state:
 
 if not st.session_state['gif_displayed']:
     st.image("9d78304e026a16ffdfa1b0c77a65498d.gif", use_container_width=True)
-    time.sleep(3)
+    time.sleep(2)
     st.session_state['gif_displayed'] = True
     st.rerun()
 
@@ -110,7 +110,7 @@ def display_related_stocks(main_ticker):
             st.error(f"Error fetching data for {sym}: {e}")
 
 
-    st.markdown("## 🔎 People Also Search")
+    st.header(" 🔎 People Also Search")
 
     # 使用 st.columns 创建列
     cols = st.columns(len(related_stocks))
@@ -152,11 +152,50 @@ if selected_ticker:
 
     if info:
         # 展示公司基本资料
-        st.image(info['Image'], width=100)
-        st.markdown(f"### {info['Name']}")
-        st.markdown(f"[Visit Website]({info['Website']})")
-        st.write(f"**Sector:** {info['Sector']}")
+        col1, col2, col3 = st.columns([2, 2, 5])
 
+        with col1:
+            st.markdown(
+                f"""
+                <div style='display: flex; align-items: flex-start;'>
+                    <div>
+                        <p style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">{info['Name']}</p>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col2:
+            st.markdown(
+                f"""
+                <div style='display: flex; align-items: left; height: 100%;'>
+                    <a href="{info['Website']}" target="_blank" style="
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: #1a73e8;
+                        text-decoration: none;
+                        padding: 5px 8px;
+                        border: 1px solid #1a73e8;
+                        border-radius: 3px;
+                        transition: all 0.2s ease;">
+                        Visit Website
+                    </a>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col3:
+            st.markdown(
+                f"""
+                <div style='display: flex; justify-content: flex-start; align-items: center; height: 80%;'>
+                    <img src="{info['Image']}" width="80" style="border-radius: 6px;">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    
         # 查找同Sector的其他公司
         related_tickers = find_related_tickers(selected_ticker, info['Sector'])
 
@@ -185,6 +224,7 @@ if predict_button:
         st.metric(label="Predicted Volatility", value=predicted_volatility)
     with col2:
         st.metric(label="Predicted Trading Volume", value=f"{predicted_volume:,}")
+        col1, col2 = st.columns(2)
 
     st.markdown("---")
 
@@ -240,7 +280,7 @@ if predict_button:
             unemployment = requests.get(unemployment_url).json()["observations"][-1]["value"]
 
             return {
-                "GDP Growth": f"{gdp}%",
+                "GDP (billion dollars)": gdp,
                 "CPI Inflation": f"{cpi}%",
                 "Unemployment Rate": f"{unemployment}%"
             }
@@ -249,20 +289,39 @@ if predict_button:
 
          #get real-time technical indicators
         def fetch_fundamentals(ticker):
-            api_key = "Y16JFTL2T7VKTAEA"
-            url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
+            FMP_API_KEY = st.secrets["FMP_API_KEY"]
+            url = f"https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?apikey={FMP_API_KEY}&limit=1"
 
-            response = requests.get(url)
-            data = response.json()
 
-            return {
-                "ROA": f"{data.get('ReturnOnAssetsTTM', 'N/A')}%",
-                "ROE": f"{data.get('ReturnOnEquityTTM', 'N/A')}%",
-                "Quick Ratio": data.get('QuickRatio', 'N/A')
-            }
-        
+            try:
+                response = requests.get(url)
+                data = response.json()
+
+                if isinstance(data, list) and len(data) > 0:
+                    fundamentals = data[0]
+                else:
+                    return {
+                        "ROA": "N/A",
+                        "ROE": "N/A",
+                        "Dividend Yield": "N/A"
+                    }
+
+                return {
+                    "ROA": f"{float(fundamentals.get('returnOnTangibleAssets', 0)) * 100:.2f}%" if fundamentals.get('returnOnTangibleAssets') is not None else "N/A",
+                    "ROE": f"{float(fundamentals.get('roe', 0)) * 100:.2f}%" if fundamentals.get('roe') is not None else "N/A",
+                    "Dividend Yield": fundamentals.get('dividendYield', 'N/A')
+                }
+
+            except Exception as e:
+                st.error(f"Error fetching fundamentals: {e}")
+                return {
+                    "ROA": "N/A",
+                    "ROE": "N/A",
+                    "Dividend Yield": "N/A"
+                }
         st.session_state["fundamentals_data"] = fetch_fundamentals(selected_ticker)
-        
+
+    
          #get real-time corporate actions data
         import requests
         import random
@@ -298,34 +357,34 @@ if predict_button:
     fundamentals_data = st.session_state.get("fundamentals_data", {})
     corporate_action_data = st.session_state.get("corporate_action_data", {})
 
-    section_titles = ["Real-time Events/News", "Macroeconomic Factors", "Fundamentals", "Corporate Actions"]
-    containers = st.columns(4)
+    tab_titles = ["Real-time Events/News", "Macroeconomic Factors", "Fundamentals", "Corporate Actions"]
+    tabs = st.tabs(tab_titles)
 
     # --- Real-time News ---
-    with containers[0]:
-        st.subheader(section_titles[0])
+    with tabs[0]:
+        st.subheader(tab_titles[0])
         for headline, url in news_items:
             if url:
                 st.markdown(f"- 📢 [{headline}]({url})")
-        else:
+            else:
                 st.write(f"- 📢 {headline}")
 
-
-    # --- Macroeconomic Data ---
-    with containers[1]:
-        st.subheader(section_titles[1])
+    # --- Macro ---
+    with tabs[1]:
+        st.subheader(tab_titles[1])
         for key, value in macro_data.items():
             st.write(f"- {key}: {value}")
 
-    # --- Fundamentals Data ---
-    with containers[2]:
-        st.subheader(section_titles[2])
+    # --- Fundamentals ---
+    with tabs[2]:
+        st.subheader(tab_titles[2])
         for key, value in fundamentals_data.items():
             st.write(f"- {key}: {value}")
+    
 
-    # --- Corporate Action Data ---
-    with containers[3]:
-        st.subheader(section_titles[3])
+    # --- Corporate Actions ---
+    with tabs[3]:
+        st.subheader(tab_titles[3])
         for key, value in corporate_action_data.items():
             st.write(f"- {key}: {value}")
 
@@ -333,7 +392,7 @@ if predict_button:
 
 
     # --- Suggestions Section ---
-    st.subheader("💬 Suggestions Based on Forecast")
+    st.header("💬 Suggestions Based on Forecast")
     suggestion_col1, suggestion_col2, suggestion_col3 = st.columns(3)
 
     if predicted_volatility and predicted_volume:
