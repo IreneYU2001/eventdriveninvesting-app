@@ -60,9 +60,7 @@ def get_company_info(symbol: str) -> dict:
         return None
 
 def find_related_tickers(current_symbol: str, sector: str) -> list:
-    """
-    查找跟当前公司 Sector 相同的其他 ticker。
-    """
+    
     try:
         # 调用 FMP API 拉取同 Sector 的所有公司
         url = f"https://financialmodelingprep.com/api/v3/stock-screener"
@@ -147,11 +145,32 @@ predicted_volume = None
 ticker_to_related = {}  # 动态生成ticker_to_related字典
 
 if selected_ticker:
-    # 获取选中ticker的公司信息
-    info = get_company_info(selected_ticker)
+        # 获取选中ticker的公司信息
+        info = get_company_info(selected_ticker)
+        # 查找同Sector的其他公司
+        related_tickers = find_related_tickers(selected_ticker, info['Sector'])
 
+        if related_tickers:
+            # 动态生成 ticker_to_related 字典
+            ticker_to_related[selected_ticker.upper()] = related_tickers
+        else:
+            ticker_to_related[selected_ticker.upper()] = []  # 没找到就空列表
+
+        # 给DEFAULT也一个空的，避免KeyError
+        ticker_to_related["DEFAULT"] = []
+else:
+        st.error("Ticker not found.")
+
+
+# --- After Clicking Predict ---
+if predict_button:
+    with st.spinner("Predicting, please wait..."):
+        time.sleep(2)  # Simulate computation
+        predicted_volatility = round(random.uniform(0.2, 0.8), 2)
+        predicted_volume = round(random.uniform(1e6, 5e6))
+
+    # 1. Only Now Display Company Info
     if info:
-        # 展示公司基本资料
         col1, col2, col3 = st.columns([2, 2, 5])
 
         with col1:
@@ -162,10 +181,8 @@ if selected_ticker:
                         <p style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">{info['Name']}</p>
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True
+                """, unsafe_allow_html=True
             )
-
         with col2:
             st.markdown(
                 f"""
@@ -182,57 +199,41 @@ if selected_ticker:
                         Visit Website
                     </a>
                 </div>
-                """,
-                unsafe_allow_html=True
+                """, unsafe_allow_html=True
             )
         with col3:
             st.markdown(
-                f"""
+               f"""
                 <div style='display: flex; justify-content: flex-start; align-items: center; height: 80%;'>
-                    <img src="{info['Image']}" width="80" style="border-radius: 6px;">
+                    <img src="{info['Image']}" width="80" style="
+                        border-radius: 6px;
+                        box-shadow: 0px 4px 12px rgba(0,0,0,0.25), 0px 0px 4px rgba(0,0,0,0.15);
+                    ">
                 </div>
-                """,
-                unsafe_allow_html=True
+                """, unsafe_allow_html=True
             )
 
-    
-        # 查找同Sector的其他公司
-        related_tickers = find_related_tickers(selected_ticker, info['Sector'])
-
-        if related_tickers:
-            # 动态生成 ticker_to_related 字典
-            ticker_to_related[selected_ticker.upper()] = related_tickers
-        else:
-            ticker_to_related[selected_ticker.upper()] = []  # 没找到就空列表
-
-        # 给DEFAULT也一个空的，避免KeyError
-        ticker_to_related["DEFAULT"] = []
-    else:
-        st.error("Ticker not found.")
-
-
-# --- After Clicking Predict ---
-if predict_button:
-    with st.spinner("Predicting, please wait..."):
-        time.sleep(2)  # Simulate computation
-        predicted_volatility = round(random.uniform(0.2, 0.8), 2)
-        predicted_volume = round(random.uniform(1e6, 5e6))
 
     st.markdown("---")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Predicted Volatility", value=predicted_volatility)
-    with col2:
-        st.metric(label="Predicted Trading Volume", value=f"{predicted_volume:,}")
-        col1, col2 = st.columns(2)
 
-    st.markdown("---")
+    # 2. Fetch Past 30 Trading Days Data from Yahoo Finance
+    try:
+        stock = yf.Ticker(selected_ticker)
+        hist = stock.history(period="60d")  # Fetch 60 days in case of non-trading days
+        hist = hist.tail(30)
+
+        avg_volatility = (hist['High'] - hist['Low']).mean() / hist['Close'].mean()
+        avg_volume = hist['Volume'].mean()
+    except Exception as e:
+        st.error(f"Failed to fetch historical data: {e}")
+        avg_volatility = None
+        avg_volume = None
 
     # ====================
     # --- Auto-Refresh Content (Updated every 5 min) ---
     # ====================
 
-    st.header(" 💡 Additional Insights")
+    st.header(" 💡 Related Information")
 
     refresh_interval = 5 * 60  # 5 minutes in seconds
     last_refresh = st.session_state.get("last_refresh", 0)
@@ -357,7 +358,7 @@ if predict_button:
     fundamentals_data = st.session_state.get("fundamentals_data", {})
     corporate_action_data = st.session_state.get("corporate_action_data", {})
 
-    tab_titles = ["Real-time Events/News", "Macroeconomic Factors", "Fundamentals", "Corporate Actions"]
+    tab_titles = ["Real-time News", "Macroeconomic Factors", "Fundamentals", "Corporate Actions"]
     tabs = st.tabs(tab_titles)
 
     # --- Real-time News ---
@@ -391,27 +392,36 @@ if predict_button:
     st.markdown("---")
 
 
-    # --- Suggestions Section ---
-    st.header("💬 Suggestions Based on Forecast")
+    # 3. Suggestions Section Based on Historical Averages
+    st.header("💬 Suggestions")
     suggestion_col1, suggestion_col2, suggestion_col3 = st.columns(3)
 
-    if predicted_volatility and predicted_volume:
-        if predicted_volatility > 0.5 and predicted_volume > 3e6:
-            suggestion = "⚡ Very active market but risky — proceed with caution."
-        elif predicted_volatility < 0.3 and predicted_volume > 3e6:
-            suggestion = "✅ Active and relatively stable — favorable for trading."
-        elif predicted_volatility > 0.5 and predicted_volume < 3e6:
-            suggestion = "⚠️ Risky with lower liquidity — watch out for large price swings."
+    if predicted_volatility and predicted_volume and avg_volatility and avg_volume:
+        if predicted_volatility > avg_volatility * 1.2:
+            volatility_suggestion = "⚡ Volatility expected to be higher than usual."
         else:
-            suggestion = "🛌 Quiet market — low volatility and lower activity expected."
+            volatility_suggestion = "📈 Volatility expected to be normal or lower."
+
+        if predicted_volume > avg_volume * 1.2:
+            volume_suggestion = "✅ Higher trading volume than historical average."
+        elif predicted_volume < avg_volume * 0.8:
+            volume_suggestion = "⚠️ Lower trading volume than historical average."
+        else:
+            volume_suggestion = "📊 Trading volume within normal range."
 
         with suggestion_col1:
-            st.metric("Predicted Volatility", "High" if predicted_volatility > 0.5 else "Low")
+            st.metric("Predicted Volatility", f"{predicted_volatility:.2f}")
         with suggestion_col2:
-            st.metric("Predicted Volume", "High" if predicted_volume > 3e6 else "Low")
+            st.metric("Predicted Volume", f"{predicted_volume:,.0f}")
         with suggestion_col3:
-            st.success(suggestion)
+            st.markdown(
+                f"""
+                <div style="background-color:#d4edda; padding:10px; border-radius:5px; color:#155724;">
+                    {volatility_suggestion}<br>{volume_suggestion}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    display_related_stocks(selected_ticker)
 
     st.markdown("---")
-    # --- Related Stocks Section ---
-    display_related_stocks(main_ticker=selected_ticker)
