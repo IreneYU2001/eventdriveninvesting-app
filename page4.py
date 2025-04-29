@@ -27,9 +27,11 @@ st.image("Volatility.png", caption="Model Summary for Volatility Prediction", us
 
 st.header("6. Limitations & Considerations")
 st.warning("""
-- Model performance is validated only on S&P 500 companies.
-- Highly volatile stocks or newly IPO'd stocks may result in lower prediction accuracy.
-- External shocks (e.g., financial crises) are not explicitly modeled.
+-The model shows limited predictive accuracy due to suboptimal feature selection, particularly missing key drivers of trading volume.
+
+-Important factors influencing volume changes, such as intraday news flow, investor sentiment, or institutional activity, are not adequately captured.
+
+-The model may underperform on stocks where volume is driven by context-specific factors not reflected in the input features
 """)
 
 st.divider()
