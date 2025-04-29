@@ -1,27 +1,38 @@
-# Import Streamlit
 import streamlit as st
 
 # **** Page layout setup ****
 App_page_0 = st.Page(
     "page0.py",
     title="Know This App",
-    default=True
 )
 App_page_1 = st.Page(
     "page1.py",
-    title="Check Your Stock"
+    title="Everything You Want to Know"
 )
 App_page_2 = st.Page(
     "page2.py",
-    title="See Our Process"
+    title="How to Get Information"
 )
-# **** Set up navigation with section headers ****
+App_page_3 = st.Page(
+    "page3.py",
+    title="How to Predict"
+)
+App_page_4 = st.Page(
+    "page4.py",
+    title="Core Model Overview"
+)
+App_page_5 = st.Page(
+    "page-1.py",
+    title="See Our Reference"
+)
+
+# **** Set up navigation with invisible section headers ****
 pg = st.navigation(
-    [
-        App_page_0,
-        App_page_1,
-        App_page_2
-    ]
+    {
+        "  ": [App_page_0],   # 上面第一个空白标题
+        "Check Your Stock": [App_page_1, App_page_2, App_page_3, App_page_4],
+        "       ": [App_page_5],  # 下面第二个空白标题（两个零宽空格，避免冲突）
+    }
 )
 
 # **** Execute the navigation code ****
