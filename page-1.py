@@ -53,10 +53,8 @@ st.markdown("""
 <div class="section-container-red">
     <div class="section-title">📚 References and Citations</div>
     <div class="section-text">
-        1. Hochreiter, S., & Schmidhuber, J. (1997). Long Short-Term Memory. Neural Computation, 9(8), 1735–1780.<br><br>
-        2. Yahoo Finance API Documentation.<br><br>
-        3. Corporate Events Datasets (S&P Global, 2023).<br><br>
-        4. "Stock Market Volatility Measurement," CFA Institute Research Foundation.
+        1. Tavares, Abel. 2024. *FinStockDash*. GitHub. https://github.com/abeltavares/FinStockDash.
+        2. Wysocki, Peter. "Example Project." Streamlit App. Accessed April 29, 2025. https://example-project.streamlit.app/.
     </div>
 </div>
 """, unsafe_allow_html=True)

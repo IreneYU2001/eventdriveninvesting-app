@@ -13,10 +13,6 @@ App_page_2 = st.Page(
     "page2.py",
     title="How to Get Information"
 )
-App_page_3 = st.Page(
-    "page3.py",
-    title="How to Predict"
-)
 App_page_4 = st.Page(
     "page4.py",
     title="Core Model Overview"
@@ -30,7 +26,7 @@ App_page_5 = st.Page(
 pg = st.navigation(
     {
         "  ": [App_page_0],   # 上面第一个空白标题
-        "Check Your Stock": [App_page_1, App_page_2, App_page_3, App_page_4],
+        "Check Your Stock": [App_page_1, App_page_2, App_page_4],
         "       ": [App_page_5],  # 下面第二个空白标题（两个零宽空格，避免冲突）
     }
 )

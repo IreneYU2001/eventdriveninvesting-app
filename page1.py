@@ -5,6 +5,8 @@ import random
 import datetime
 import yfinance as yf
 import time
+import pickle
+import numpy as np
 
 # ---- Opening Animation ----
 if 'gif_displayed' not in st.session_state:
@@ -164,10 +166,28 @@ else:
 
 # --- After Clicking Predict ---
 if predict_button:
-    with st.spinner("Predicting, please wait..."):
-        time.sleep(2)  # Simulate computation
-        predicted_volatility = round(random.uniform(0.2, 0.8), 2)
-        predicted_volume = round(random.uniform(1e6, 5e6))
+    with st.spinner("Predicting..."):
+        import random
+
+        # --- Simulate volatility ---
+        def simulate_predicted_volatility(selected_ticker):
+            # Volatility均值0.03，标准差0.01，更贴近真实
+            volatility = random.gauss(0.03, 0.01)
+            return round(max(0.01, min(volatility, 0.06)), 2)
+
+        # --- Simulate volume ---
+        def simulate_predicted_volume(selected_ticker):
+            # Volume均值1000万，标准差500万
+            volume = int(random.gauss(10_000_000, 5_000_000))
+            return max(1_000_000, min(volume, 50_000_000))
+
+        # --- Predict based on selected ticker ---
+        predicted_volatility = simulate_predicted_volatility(selected_ticker)
+        predicted_volume = simulate_predicted_volume(selected_ticker)
+
+        # --- Display Results ---
+        st.write(f"📈 **Predicted Volatility:** {predicted_volatility}")
+        st.write(f"📊 **Predicted Volume:** {predicted_volume:,}")
 
     # 1. Only Now Display Company Info
     if info:
