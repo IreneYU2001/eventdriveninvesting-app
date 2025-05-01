@@ -4,3 +4,4 @@ numpy
 yfinance
 requests
 torch
+streamlit-extras

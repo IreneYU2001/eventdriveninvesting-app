@@ -7,7 +7,6 @@ import yfinance as yf
 import os
 import random
 
-
 # --- API Keys ---
 FMP_API_KEY = st.secrets.get("FMP_API_KEY", "")
 FINNHUB_API_KEY = st.secrets.get("FINNHUB_API_KEY", "")

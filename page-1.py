@@ -45,7 +45,7 @@ st.markdown("""
 
 
 # --- Big Page Title ---
-st.markdown('<h1 style="text-align:center; color:white;">📖 Citations</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:black;">📖 Citations</h1>', unsafe_allow_html=True)
 
 st.markdown("---")
 
