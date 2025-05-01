@@ -81,9 +81,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Big Welcome Title ---
-st.markdown('<h1 style="text-align:center; color:black;"> Welcome to the Event-Driven Investing App!</h1>', unsafe_allow_html=True)
 
+# --- Big Welcome Title ---
+st.markdown(
+    '<h1 style="text-align:center; color:white;">Welcome to the Event-Driven Investing App!</h1>',
+    unsafe_allow_html=True
+)
 st.markdown("---")
 
 # --- About This App Section (Red) ---

@@ -21,12 +21,19 @@ if not st.session_state['gif_displayed']:
 # ---- Main Page Config ----
 st.set_page_config(page_title="Stock Volatility & Volume Predictor", layout="wide")
 
+
+
 # --- Main Page Title ---
 st.title("📈 Stock Volatility & Trading Volume Predictor")
 st.caption("Predict future volatility and trading activity of stocks based on deep learning (LSTM) modeling.")
 st.markdown("---")
 
 FMP_API_KEY = st.secrets["FMP_API_KEY"]
+
+@st.cache_data
+def load_macro_data():
+    return pd.read_csv("realtime_marco.csv")
+macro_df = load_macro_data()
 
 # 拉取公司基本信息
 def get_company_info(symbol: str) -> dict:
@@ -133,6 +140,76 @@ def display_related_stocks(main_ticker):
                 </div>
             """, unsafe_allow_html=True)
 
+def get_company_metrics(ticker):
+    url = f"https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={FMP_API_KEY}"
+    response = requests.get(url)
+    data = response.json()
+    if not data:
+        return {key: 0.0 for key in [
+            "divyield", "beta", "marketCap", "averageVolume", "price"
+        ]}
+    profile = data[0]
+    return {
+        "divyield": profile.get("lastDividend", 0.0),
+        "beta": profile.get("beta", 0.0),
+        "marketCap": profile.get("marketCap", 0.0),
+        "averageVolume": profile.get("averageVolume", 0.0),
+        "price": profile.get("price", 0.0)
+    }
+
+# --- 构建特征函数（volatility 专用） ---
+def get_features_for_prediction(ticker):
+    lookback_days = 30
+    df = yf.download(ticker, period="60d", interval="1d").dropna().tail(lookback_days)
+    df["PRC"] = df["Close"]
+    df["Momentum"] = df["Close"].pct_change(5).fillna(0)
+    df["Volatility_5d"] = df["Close"].pct_change().rolling(5).std().fillna(0)
+
+    macro_cols = [
+        "GDP", "CPI", "Unemployment Rate", "Federal Funds Rate",
+        "Personal Consumption Expenditures", "Industrial Production", "Retail Sales",
+        "M2 Money Stock", "VIX", "TED Spread", "sentiment_score"
+    ]
+    macro_row = macro_df.iloc[-1]
+    for col in macro_cols:
+        df[col] = macro_row[col]
+
+    firm_cols = [
+        "bm", "divyield", "capei", "gpm", "npm", "roa", "roe",
+        "capital_ratio", "de_ratio", "quick_ratio", "inv_turn"
+    ]
+    firm_data = get_company_metrics(ticker)
+    for col in firm_cols:
+        df[col] = firm_data[col]
+
+    feature_cols = [
+        "PRC", "Volatility_5d", "Momentum", "sentiment_score",
+        *macro_cols[:-1], *firm_cols  # sentiment_score 已加过
+    ]
+    return df[feature_cols].values
+
+# --- Volume 模型特征 ---
+def get_features_for_prediction_volume(ticker):
+    X = get_features_for_prediction(ticker)
+    vol_df = yf.download(ticker, period="60d", interval="1d").dropna().tail(30)
+    X[:, 1] = vol_df["Volume"].values  # 替换 Volatility_5d 为 VOL
+    return X
+
+# --- 模型预测逻辑 ---
+def predict_volatility(ticker):
+    with open("lstm_volatility_model.pkl", "rb") as f:
+        model = pickle.load(f)
+    X = get_features_for_prediction(ticker)
+    X = np.expand_dims(X, axis=0)
+    return round(float(model.predict(X)[0][0]), 4)
+
+def predict_volume(ticker):
+    with open("lstm_volume_model.pkl", "rb") as f:
+        model = pickle.load(f)
+    X = get_features_for_prediction_volume(ticker)
+    X = np.expand_dims(X, axis=0)
+    return int(model.predict(X)[0][0])
+
 
 # --- Ticker Selection ---
 sp500_df = pd.read_csv("sp500.csv")
@@ -167,27 +244,14 @@ else:
 # --- After Clicking Predict ---
 if predict_button:
     with st.spinner("Predicting..."):
-        import random
-
-        # --- Simulate volatility ---
-        def simulate_predicted_volatility(selected_ticker):
-            # Volatility均值0.03，标准差0.01，更贴近真实
-            volatility = random.gauss(0.03, 0.01)
-            return round(max(0.01, min(volatility, 0.06)), 2)
-
-        # --- Simulate volume ---
-        def simulate_predicted_volume(selected_ticker):
-            # Volume均值1000万，标准差500万
-            volume = int(random.gauss(10_000_000, 5_000_000))
-            return max(1_000_000, min(volume, 50_000_000))
-
-        # --- Predict based on selected ticker ---
-        predicted_volatility = simulate_predicted_volatility(selected_ticker)
-        predicted_volume = simulate_predicted_volume(selected_ticker)
-
-        # --- Display Results ---
-        st.write(f"📈 **Predicted Volatility:** {predicted_volatility}")
-        st.write(f"📊 **Predicted Volume:** {predicted_volume:,}")
+        try:
+            pred_vol = predict_volatility(selected_ticker)
+            pred_volu = predict_volume(selected_ticker)
+            st.success("✅ Prediction Complete!")
+            st.metric("Predicted Volatility", f"{pred_vol}")
+            st.metric("Predicted Volume", f"{pred_volu:,}")
+        except Exception as e:
+            st.error(f"Prediction failed: {e}")
 
     # 1. Only Now Display Company Info
     if info:

@@ -43,8 +43,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
 # --- Big Page Title ---
-st.markdown('<h1 style="text-align:center; color:black;">📖 Citations and Key Code</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:white;">📖 Citations</h1>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -53,11 +54,12 @@ st.markdown("""
 <div class="section-container-red">
     <div class="section-title">📚 References and Citations</div>
     <div class="section-text">
-        1. Tavares, Abel. 2024. *FinStockDash*. GitHub. https://github.com/abeltavares/FinStockDash.
-        2. Wysocki, Peter. "Example Project." Streamlit App. Accessed April 29, 2025. https://example-project.streamlit.app/.
+        1. Tavares, Abel. 2024. <i>FinStockDash</i>. GitHub. <a href="https://github.com/abeltavares/FinStockDash">https://github.com/abeltavares/FinStockDash</a>.<br>
+        2. Wysocki, Peter. "Example Project." Streamlit App. Accessed April 29, 2025. <a href="https://example-project.streamlit.app/">https://example-project.streamlit.app/</a>.
     </div>
 </div>
 """, unsafe_allow_html=True)
+
 
 # Divider
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
