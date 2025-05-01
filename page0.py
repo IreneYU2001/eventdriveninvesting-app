@@ -88,7 +88,15 @@ st.markdown(
     '<h1 style="text-align:center; color:black;">Welcome to the Event-Driven Investing App!</h1>',
     unsafe_allow_html=True
 )
+
+# --- Developer Info ---
+st.markdown(
+    '<p style="text-align:center; color:gray; font-size:18px;">Developer: Shuomeng Guan, Yixi Yu, Dizhao Zhang</p>',
+    unsafe_allow_html=True
+)
+
 st.markdown("---")
+
 
 # --- About This App Section (Red) ---
 st.markdown("""
