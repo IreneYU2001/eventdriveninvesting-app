@@ -16,12 +16,12 @@ combining deep learning with structured and unstructured data for enhanced short
 
 st.header("2. Training Data Sources")
 st.markdown("""
-- **Financial Database** (Price, Volume, Financial Statement and Earnings Announcements Data from WRDS)
-- **Fundamental Data** (e.g., ROE, ROA, P/E Ratio, etc. from WRDS)
-- **Technical Indicators** (e.g., Moving Averages, Bollinger Bands, etc. from WRDS)
-- **Market Data** (e.g., VIX, SP500, etc. from WRDS)
-- **Corporate Actions** (e.g., Stock Splits, Dividends, etc. from  WRDS)
-- **Macroeconomic Indicators** (e.g., GDP, CPI, Unemployment Rate etc. using FRED API)
+- **Financial Database** (Price, Volume, Financial Statement and Earnings Announcements Data) from WRDS)
+- **Fundamental Data** (e.g., ROE, ROA, P/E Ratio, etc.) from WRDS)
+- **Technical Indicators** (e.g., Moving Averages, Bollinger Bands, etc.) from WRDS)
+- **Market Data** (e.g., VIX, SP500, etc.) from WRDS)
+- **Corporate Actions** (e.g., Stock Splits, Dividends, etc.) from  WRDS)
+- **Macroeconomic Indicators** (e.g., GDP, CPI, Unemployment Rate etc.) using FRED API)
 - **Financial News** (Company news using BENZINGA API → Sentiment Score through FinBERT)
 """, unsafe_allow_html=True)
 
@@ -60,11 +60,10 @@ st.image("Volatility.png", caption="Model Summary for Volatility Prediction", us
 
 st.header("6. Limitations & Considerations")
 st.warning("""
--The model shows limited predictive accuracy due to suboptimal feature selection, particularly missing key drivers of trading volume.
-
--Important factors influencing volume changes, such as intraday news flow, or institutional activity other than dividends, are not adequately captured.
-
--The model may underperform on stocks where volume is driven by context-specific factors not reflected in the input features
+- The model shows limited predictive accuracy due to suboptimal feature selection, particularly missing key drivers of trading volume.
+- We didn't have time to backtest the model using a robust validation framework; the evaluation may overstate performance.
+- Important factors influencing volume changes, such as intraday news flow, or institutional activity other than dividends, are not adequately captured.
+- The model may underperform on stocks where volume is driven by context-specific factors not reflected in the input features
 """)
 
 st.header("7. Future Work")
